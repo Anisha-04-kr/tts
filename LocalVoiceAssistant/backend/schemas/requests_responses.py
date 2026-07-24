@@ -35,12 +35,13 @@ class ConfigResponse(BaseModel):
 # TTS Endpoint Schemas
 class TTSRequest(BaseModel):
     text: str = Field(..., description="Text prompt to synthesize into speech (any UTF-8 language)", json_schema_extra={"example": "Hello, this is a local text-to-speech test."})
+    language: Optional[str] = Field(default="auto", description="Speech language identifier (auto, en, ta, hi, es, etc.)")
     speaker: Optional[str] = Field(default="default", description="Speaker reference voice profile identifier")
     speed: Optional[float] = Field(default=1.0, ge=0.5, le=2.0, description="Speech rate speed factor")
     pitch: Optional[float] = Field(default=0.0, ge=-10.0, le=10.0, description="Audio pitch shift factor")
     sample_rate: Optional[int] = Field(default=24000, description="Target audio sampling rate in Hz")
     output_format: Optional[str] = Field(default="wav", description="Audio encoding format (wav, pcm)")
-    return_json: Optional[bool] = Field(default=False, description="Set True to receive Base64 JSON instead of direct binary audio/wav stream")
+    return_json: Optional[bool] = Field(default=False, description="Set True to receive Base64 JSON instead of direct binary audio stream")
 
 class TTSResponse(BaseModel):
     audio_base64: Optional[str] = Field(default=None, description="Base64 encoded audio bytes (if return_json=True)")
@@ -62,6 +63,12 @@ class TTSHealthResponse(BaseModel):
     running_since: Optional[str] = None
     validation_errors: List[str] = Field(default_factory=list)
     gpu: Dict[str, Any] = Field(default_factory=dict)
+
+class TTSLanguageItem(BaseModel):
+    code: str
+    name: str
+    native_name: Optional[str] = None
+
 
 # LLM Endpoint Schemas
 class LLMRequest(BaseModel):

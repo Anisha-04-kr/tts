@@ -9,10 +9,29 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from backend.core.service_manager import service_manager
 from backend.registry.model_registry import model_registry
 from backend.models.domain import ModelType
-from backend.schemas.requests_responses import TTSRequest, TTSResponse, TTSHealthResponse
+from backend.schemas.requests_responses import TTSRequest, TTSResponse, TTSHealthResponse, TTSLanguageItem
 from backend.logger import log_event
 
 router = APIRouter(prefix="/tts", tags=["Text-To-Speech"])
+
+SUPPORTED_TTS_LANGUAGES: List[Dict[str, str]] = [
+    {"code": "auto", "name": "Auto-Detect", "native_name": "Automatic Detection"},
+    {"code": "en", "name": "English", "native_name": "English"},
+    {"code": "es", "name": "Spanish", "native_name": "Español"},
+    {"code": "fr", "name": "French", "native_name": "Français"},
+    {"code": "de", "name": "German", "native_name": "Deutsch"},
+    {"code": "hi", "name": "Hindi", "native_name": "हिन्दी"},
+    {"code": "zh", "name": "Mandarin Chinese", "native_name": "中文"},
+    {"code": "ja", "name": "Japanese", "native_name": "日本語"},
+    {"code": "ko", "name": "Korean", "native_name": "한국어"},
+    {"code": "ta", "name": "Tamil", "native_name": "தமிழ்"},
+    {"code": "te", "name": "Telugu", "native_name": "తెలుగు"},
+    {"code": "ar", "name": "Arabic", "native_name": "العربية"},
+    {"code": "ru", "name": "Russian", "native_name": "Русский"},
+    {"code": "pt", "name": "Portuguese", "native_name": "Português"},
+    {"code": "it", "name": "Italian", "native_name": "Italiano"},
+    {"code": "nl", "name": "Dutch", "native_name": "Nederlands"}
+]
 
 def _get_tts_service():
     """Helper to retrieve active TTS service instance."""
@@ -22,16 +41,25 @@ def _get_tts_service():
         srv = FishSpeechTTSService()
     return srv
 
+@router.get("/languages", response_model=List[TTSLanguageItem])
+async def list_tts_languages() -> List[TTSLanguageItem]:
+    """
+    Returns supported multi-lingual target speech synthesis languages for Fish Speech S2 Pro.
+    """
+    log_event("api", "Received GET /api/v1/tts/languages request")
+    return [TTSLanguageItem(**lang) for lang in SUPPORTED_TTS_LANGUAGES]
+
 @router.post("/synthesize")
 async def synthesize_speech(req: TTSRequest, request: Request):
     """
-    Synthesizes text into speech. Returns binary audio/wav by default, or JSON if requested.
+    Synthesizes text into speech. Returns binary audio bytes by default, or JSON if requested.
     """
     log_event("api", f"Received POST /api/v1/tts/synthesize (text length: {len(req.text)}, speaker: '{req.speaker}')")
     
     tts_service = _get_tts_service()
     res = await tts_service.synthesize(
         text=req.text,
+        language=req.language or "auto",
         speaker=req.speaker or "default",
         speed=req.speed or 1.0,
         pitch=req.pitch or 0.0,
@@ -52,9 +80,8 @@ async def synthesize_speech(req: TTSRequest, request: Request):
 
     audio_bytes = res.get("audio_bytes", b"")
 
-    # Determine response format (JSON vs direct binary audio/wav)
-    accept_header = request.headers.get("accept", "")
-    wants_json = req.return_json or "application/json" in accept_header
+    # Determine response format (JSON vs direct binary audio)
+    wants_json = bool(req.return_json)
 
     if wants_json:
         audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
@@ -69,10 +96,12 @@ async def synthesize_speech(req: TTSRequest, request: Request):
             metadata=res.get("metadata", {})
         )
 
-    # Return direct binary audio/wav content by default
+    # Return direct binary audio content with proper media_type
+    fmt = str(res.get("format", "wav")).lower()
+    media_type = "audio/mpeg" if fmt in ["mp3", "mpeg"] else f"audio/{fmt}"
     return Response(
         content=audio_bytes,
-        media_type=f"audio/{res.get('format', 'wav')}",
+        media_type=media_type,
         headers={
             "X-Synthesis-Time-MS": str(res.get("synthesis_time_ms", 0.0)),
             "X-Audio-Duration-Sec": str(res.get("duration_seconds", 0.0)),
@@ -80,6 +109,27 @@ async def synthesize_speech(req: TTSRequest, request: Request):
             "X-Model-Used": str(res.get("model_used", "fish-speech-s2-pro"))
         }
     )
+
+@router.post("/stream")
+async def stream_speech(req: TTSRequest):
+    """
+    Streams synthesized audio chunks incrementally in real-time.
+    """
+    log_event("api", f"Received POST /api/v1/tts/stream request (text length: {len(req.text)})")
+    tts_service = _get_tts_service()
+    
+    async def audio_generator():
+        async for chunk in tts_service.stream_audio(
+            text=req.text,
+            language=req.language or "auto",
+            speaker=req.speaker or "default",
+            speed=req.speed or 1.0,
+            pitch=req.pitch or 0.0,
+            sample_rate=req.sample_rate or 24000
+        ):
+            yield chunk
+
+    return StreamingResponse(audio_generator(), media_type="audio/wav")
 
 @router.get("/health", response_model=TTSHealthResponse)
 async def tts_health() -> TTSHealthResponse:
@@ -124,3 +174,4 @@ async def stop_tts_service() -> Dict[str, Any]:
         "status": "stopped",
         "message": "Fish Speech TTS service stopped."
     }
+

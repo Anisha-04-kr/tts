@@ -22,11 +22,17 @@ async def generate_text(req: LLMRequest) -> LLMResponse:
         from backend.services.llm.lmstudio import LMStudioLLMService
         llm_service = LMStudioLLMService()
 
+    default_sys = (
+        "You are an expert offline Medical AI Assistant and Clinical Specialist. "
+        "Provide detailed medical definitions, clinical terms explanations, diagnostic criteria, "
+        "pharmacology information, and structured Healthcare advice clearly."
+    )
+
     res = await llm_service.generate(
         prompt=req.prompt,
-        system_prompt=req.system_prompt or "You are a local voice assistant.",
+        system_prompt=req.system_prompt or default_sys,
         temperature=req.temperature or 0.7,
-        max_tokens=req.max_tokens or 256
+        max_tokens=req.max_tokens or 512
     )
     return LLMResponse(**res)
 
@@ -42,13 +48,20 @@ async def stream_tokens(req: LLMRequest):
         from backend.services.llm.lmstudio import LMStudioLLMService
         llm_service = LMStudioLLMService()
 
+    default_sys = (
+        "You are an expert offline Medical AI Assistant and Clinical Specialist. "
+        "Provide detailed medical definitions, clinical terms explanations, diagnostic criteria, "
+        "pharmacology information, and structured Healthcare advice clearly."
+    )
+
     async def token_generator():
         async for token in llm_service.stream_tokens(
             prompt=req.prompt,
-            system_prompt=req.system_prompt or "You are a local voice assistant.",
+            system_prompt=req.system_prompt or default_sys,
             temperature=req.temperature or 0.7,
-            max_tokens=req.max_tokens or 256
+            max_tokens=req.max_tokens or 512
         ):
+
             yield f"data: {token}\n\n"
         yield "data: [DONE]\n\n"
 

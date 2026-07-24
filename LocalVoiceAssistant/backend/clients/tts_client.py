@@ -10,7 +10,7 @@ from backend.logger import logger, log_event
 class TTSClient:
     """Handles HTTP communication with local vLLM-Omni Speech API endpoint."""
 
-    def __init__(self, endpoint: Optional[str] = None, timeout: float = 30.0) -> None:
+    def __init__(self, endpoint: Optional[str] = None, timeout: float = 1.5) -> None:
         self.endpoint = endpoint or settings.TTS_ENDPOINT
         self.timeout = timeout
         log_event("tts_client", f"Initialized TTSClient targeting local vLLM-Omni endpoint: {self.endpoint}")
@@ -21,22 +21,14 @@ class TTSClient:
         Returns True if server is online and reachable, False otherwise.
         """
         try:
-            # Derive health base URL e.g. http://127.0.0.1:8002/health
             base_url = f"http://{settings.VLLM_OMNI_HOST}:{settings.VLLM_OMNI_PORT}/health"
-            async with httpx.AsyncClient(timeout=3.0) as client:
+            async with httpx.AsyncClient(timeout=1.0) as client:
                 res = await client.get(base_url)
                 if res.status_code == 200:
                     log_event("tts_client", f"vLLM-Omni health check probe successful at {base_url}.")
                     return True
         except Exception:
-            # Also try probing configured TTS_ENDPOINT directly
-            try:
-                async with httpx.AsyncClient(timeout=3.0) as client:
-                    res = await client.get(self.endpoint)
-                    if res.status_code in [200, 405, 422]:
-                        return True
-            except Exception:
-                pass
+            pass
 
         log_event("tts_client", f"vLLM-Omni server probe failed for endpoint {self.endpoint}.", level="warning")
         return False
@@ -44,6 +36,7 @@ class TTSClient:
     async def synthesize_speech(
         self,
         text: str,
+        language: str = "auto",
         speaker: str = "default",
         speed: float = 1.0,
         pitch: float = 0.0,
@@ -55,11 +48,12 @@ class TTSClient:
         Returns raw audio bytes (WAV/PCM) if successful, or None if vLLM-Omni is offline or fails.
         NEVER generates fake speech.
         """
-        log_event("tts_client", f"Sending speech synthesis request to {self.endpoint} (speaker: '{speaker}', sample_rate: {sample_rate}Hz)...")
+        log_event("tts_client", f"Sending speech synthesis request to {self.endpoint} (language: '{language}', speaker: '{speaker}', sample_rate: {sample_rate}Hz)...")
 
         payload = {
             "model": settings.DEFAULT_TTS_MODEL,
             "input": text,
+            "language": language,
             "voice": speaker,
             "speed": speed,
             "pitch": pitch,
@@ -92,6 +86,7 @@ class TTSClient:
     async def stream_audio(
         self,
         text: str,
+        language: str = "auto",
         speaker: str = "default",
         speed: float = 1.0,
         pitch: float = 0.0,
@@ -100,11 +95,12 @@ class TTSClient:
         """
         Streams audio chunk bytes incrementally from vLLM-Omni speech API.
         """
-        log_event("tts_client", f"Initiating audio stream from {self.endpoint}...")
+        log_event("tts_client", f"Initiating audio stream from {self.endpoint} (language: '{language}')...")
         
         payload = {
             "model": settings.DEFAULT_TTS_MODEL,
             "input": text,
+            "language": language,
             "voice": speaker,
             "speed": speed,
             "pitch": pitch,

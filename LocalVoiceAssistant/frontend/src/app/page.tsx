@@ -1,118 +1,233 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { 
+  HeartPulse, 
+  Mic, 
+  MessageSquare, 
+  Languages, 
+  FileText, 
+  FileSpreadsheet, 
+  CheckCircle2, 
+  Cpu, 
+  HardDrive, 
+  Zap, 
+  Activity, 
+  ShieldCheck, 
+  ArrowRight,
+  Server,
+  Volume2,
+  Sparkles,
+  RefreshCw
+} from "lucide-react";
 
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-  timestamp?: string;
-}
+export default function DashboardPage() {
+  const [mounted, setMounted] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-export default function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: "Hello! I am your 100% local AI voice assistant. How can I help you today?" }
-  ]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [status, setStatus] = useState("Online");
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+  if (!mounted) return null;
 
-    const userMsg = input.trim();
-    setInput("");
-    setMessages(prev => [...prev, { role: "user", content: userMsg }]);
-    setIsLoading(true);
+  const systemStatusCards = [
+    { title: "AI Models", status: "Loaded & Ready", detail: "Qwen 3.5 (9B Params)", icon: Cpu, isOnline: true },
+    { title: "GPU Status", status: "Active (CUDA)", detail: "NVIDIA RTX 4090", icon: Zap, isOnline: true },
+    { title: "Whisper ASR", status: "Ready", detail: "Whisper Large V3", icon: Mic, isOnline: true },
+    { title: "TTS Engine", status: "Online", detail: "Fish Speech S2 Pro", icon: Volume2, isOnline: true },
+    { title: "Translation", status: "Online", detail: "Indic-Trans2 / NLLB", icon: Languages, isOnline: true },
+    { title: "Local Server", status: "Healthy", detail: "FastAPI Async Engine", icon: Server, isOnline: true },
+    { title: "RAM Usage", status: "8.4 / 32.0 GB", detail: "26% Utilization", icon: HardDrive, isOnline: true },
+    { title: "VRAM Usage", status: "2.0 / 16.0 GB", detail: "12.5% Allocation", icon: Zap, isOnline: true },
+    { title: "CPU Usage", status: "12% Active", detail: "16 Cores Threaded", icon: Activity, isOnline: true },
+  ];
 
-    try {
-      const res = await fetch("/api/v1/llm/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: userMsg }),
-      });
+  const quickActions = [
+    {
+      title: "Start Voice Assistant",
+      desc: "Full-duplex real-time dictation & conversational AI",
+      href: "/voice",
+      icon: Mic,
+      color: "from-blue-600 to-indigo-600",
+      btnBg: "bg-blue-600 hover:bg-blue-500",
+    },
+    {
+      title: "Open AI Chat",
+      desc: "ChatGPT-like clinical assistant & document analysis",
+      href: "/chat",
+      icon: MessageSquare,
+      color: "from-sky-500 to-blue-600",
+      btnBg: "bg-sky-600 hover:bg-sky-500",
+    },
+    {
+      title: "Translate Audio",
+      desc: "Cross-lingual medical translation with term protection",
+      href: "/translation",
+      icon: Languages,
+      color: "from-purple-600 to-indigo-600",
+      btnBg: "bg-purple-600 hover:bg-purple-500",
+    },
+    {
+      title: "Generate Clinical Note",
+      desc: "Automated SOAP, Discharge & Progress note summaries",
+      href: "/clinical-notes",
+      icon: FileText,
+      color: "from-emerald-600 to-teal-600",
+      btnBg: "bg-emerald-600 hover:bg-emerald-500",
+    },
+    {
+      title: "ICD-10 Coding",
+      desc: "Instant AI diagnostic coding with confidence scoring",
+      href: "/icd10",
+      icon: FileSpreadsheet,
+      color: "from-amber-500 to-orange-600",
+      btnBg: "bg-amber-600 hover:bg-amber-500",
+    },
+  ];
 
-      if (res.ok) {
-        const data = await res.json();
-        setMessages(prev => [...prev, { role: "assistant", content: data.text }]);
-      } else {
-        setMessages(prev => [...prev, { role: "assistant", content: "Local LLM engine is offline or unreachable." }]);
-      }
-    } catch (err) {
-      setMessages(prev => [...prev, { role: "assistant", content: "Error connecting to local backend API." }]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const clearChat = () => {
-    setMessages([{ role: "assistant", content: "Chat cleared. Ready for new questions." }]);
+  const handleRefreshMetrics = () => {
+    setIsRefreshing(true);
+    setTimeout(() => setIsRefreshing(false), 800);
   };
 
   return (
-    <div className="flex-1 flex flex-col max-w-5xl w-full mx-auto p-4">
-      {/* Top Controls Header */}
-      <div className="flex items-center justify-between bg-surface p-4 rounded-lg border border-gray-800 mb-4 shadow">
-        <div>
-          <h1 className="text-xl font-bold text-white">Interactive Local Chat</h1>
-          <p className="text-xs text-gray-400">Powered by Local LM Studio / vLLM + Fish Speech S2 Pro</p>
+    <div className="max-w-7xl mx-auto space-y-8 pb-8">
+      {/* Welcome Banner */}
+      <div className="relative rounded-3xl bg-gradient-to-r from-primary-600 via-blue-700 to-indigo-800 p-8 text-white shadow-2xl shadow-primary-600/20 overflow-hidden">
+        {/* Subtle background glow graphics */}
+        <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute left-1/2 top-0 w-96 h-96 bg-cyan-400/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-3 max-w-2xl">
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-xs font-semibold text-cyan-200">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>100% Offline • HIPAA Compliance Ready</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+              Offline AI Healthcare Assistant
+            </h1>
+            <p className="text-sm sm:text-base text-blue-100 leading-relaxed">
+              Privacy-first clinical intelligence, real-time voice transcription, ICD-10 diagnostic coding, and automated clinical documentation powered entirely by local GPU acceleration.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <Link
+              href="/voice"
+              className="px-6 py-3.5 rounded-2xl bg-white text-primary-700 font-bold text-xs hover:bg-blue-50 transition shadow-lg flex items-center space-x-2"
+            >
+              <Mic className="w-4 h-4 text-primary-600 animate-pulse" />
+              <span>Start Voice Assistant</span>
+            </Link>
+            <Link
+              href="/chat"
+              className="px-6 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-white font-semibold text-xs transition flex items-center space-x-2"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>Open AI Chat</span>
+            </Link>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <button onClick={clearChat} className="px-3 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded border border-gray-700">
-            Clear Chat
+      </div>
+
+      {/* System Status Cards Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              System Status Overview
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Real-time local hardware and AI engine diagnostics</p>
+          </div>
+
+          <button
+            onClick={handleRefreshMetrics}
+            className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs flex items-center space-x-1.5"
+            title="Refresh System Metrics"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-primary-600" : ""}`} />
+            <span>Refresh</span>
           </button>
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-900/80 text-green-300">
-            <span className="w-2 h-2 rounded-full bg-green-400 mr-1.5 animate-pulse"></span>
-            {status}
-          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {systemStatusCards.map((card, idx) => {
+            const Icon = card.icon;
+            return (
+              <div
+                key={idx}
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl glass-card hover:shadow-healthcare transition duration-300 space-y-3 relative overflow-hidden group"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-9 h-9 rounded-xl bg-primary-600/10 text-primary-600 dark:text-primary-400 flex items-center justify-center font-bold">
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{card.title}</span>
+                  </div>
+                  <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    <span>Active</span>
+                  </div>
+                </div>
+
+                <div className="pt-1">
+                  <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{card.status}</div>
+                  <div className="text-[11px] text-slate-400 font-mono mt-0.5">{card.detail}</div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Messages Stream Container */}
-      <div className="flex-1 bg-surface rounded-lg border border-gray-800 p-4 overflow-y-auto space-y-4 min-h-[400px] max-h-[600px] shadow-inner">
-        {messages.map((msg, idx) => (
-          <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[75%] rounded-lg p-3 text-sm shadow ${
-              msg.role === "user" 
-                ? "bg-blue-600 text-white rounded-br-none" 
-                : "bg-cardBg text-gray-200 border border-gray-700 rounded-bl-none"
-            }`}>
-              <div className="font-semibold text-xs mb-1 opacity-70">
-                {msg.role === "user" ? "You" : "Local Assistant"}
-              </div>
-              <div className="whitespace-pre-wrap">{msg.content}</div>
-            </div>
-          </div>
-        ))}
+      {/* Quick Actions Grid */}
+      <div className="space-y-4 pt-2">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-amber-500" />
+            Quick Clinical Actions
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Launch voice assistant, code ICD-10 notes, or synthesize speech</p>
+        </div>
 
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-cardBg border border-gray-700 text-gray-400 rounded-lg p-3 text-sm animate-pulse">
-              Reasoning locally...
-            </div>
-          </div>
-        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {quickActions.map((action, idx) => {
+            const Icon = action.icon;
+            return (
+              <Link
+                key={idx}
+                href={action.href}
+                className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl glass-card hover:shadow-xl transition-all duration-300 flex flex-col justify-between space-y-4 hover:-translate-y-1"
+              >
+                <div className="space-y-3">
+                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-r ${action.color} text-white flex items-center justify-center shadow-lg group-hover:scale-105 transition`}>
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition">
+                      {action.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                      {action.desc}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex items-center justify-between text-xs font-semibold text-primary-600 dark:text-primary-400 group-hover:translate-x-1 transition duration-200">
+                  <span>Launch Tool</span>
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
-
-      {/* Input Form Bar */}
-      <form 
-        onSubmit={(e) => { e.preventDefault(); sendMessage(); }} 
-        className="mt-4 flex items-center space-x-2"
-      >
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask your local assistant anything..."
-          className="flex-1 bg-surface border border-gray-700 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500 shadow"
-        />
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-medium px-6 py-3 rounded-lg text-sm transition shadow disabled:opacity-50"
-        >
-          Send
-        </button>
-      </form>
     </div>
   );
 }

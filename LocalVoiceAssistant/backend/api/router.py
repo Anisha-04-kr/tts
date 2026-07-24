@@ -16,6 +16,7 @@ from backend.api.v1.websocket import router as ws_router
 from backend.api.v1.conversation import router as conversation_router
 from backend.api.v1.logs import router as logs_router
 from backend.api.v1.medical import router as medical_router
+from backend.api.v1.translation import router as translation_router
 
 # Version 1 Master API Router
 v1_router = APIRouter(prefix="/v1")
@@ -32,6 +33,7 @@ v1_router.include_router(ws_router)
 v1_router.include_router(conversation_router)
 v1_router.include_router(logs_router)
 v1_router.include_router(medical_router)
+v1_router.include_router(translation_router)
 
 # Master API Router mounted under /api
 api_router = APIRouter(prefix="/api")
