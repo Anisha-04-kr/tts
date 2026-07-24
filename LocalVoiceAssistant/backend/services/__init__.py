@@ -1,0 +1,3 @@
+"""
+Modular AI services package.
+"""

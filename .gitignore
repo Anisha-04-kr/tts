@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+**/node_modules/
+.venv/
+**/.venv/
+venv/
+ENV/
+env/
+
+# Build & Cache outputs
+.next/
+**/.next/
+dist/
+build/
+out/
+.cache/
+**/.cache/
+
+# Python bytecode & test caches
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Logs
+*.log
+logs/
+**/logs/*
+!**/logs/.gitkeep
+
+# IDE / System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Database / Temp
+*.sqlite3
+temp/
+**/temp/*
+!**/temp/.gitkeep
+
+# Models / Downloads Caches (keep .gitkeep files)
+models/downloads/*
+models/cache/*
+models/whisper/*
+models/llm/*
+models/fishspeech/*
+models/embeddings/*
+models/voices/*
+!models/**/.gitkeep
